@@ -3,16 +3,24 @@ secret: mysecret
 passphrase: mypassphrase
 live: no
 frontend: curses
-periods:
-  - name: BTC
-    product: BTC-USD
-    length: 5
+products:
+  - id: BTC-USD
+    periods: [60, 5]
+    strategy: macd
     trade: yes
-  - name: ETH
-    product: ETH-USD
-    length: 15
+  - id: ETH-USD
+    periods: [60, 5]
+    strategy: macd
     trade: yes
-  - name: LTC
-    product: LTC-USD
-    length: 30
+  - id: LTC-USD
+    periods: [60, 5]
+    strategy: macd
+    trade: yes
+  - id: ETH-BTC
+    periods: [60, 5]
+    strategy: macd
+    trade: yes
+  - id: LTC-BTC
+    periods: [60, 5]
+    strategy: macd
     trade: yes

@@ -69,15 +69,27 @@ trade_period_list = {}
 # List of products that we are actually monitoring
 product_list = set()
 
-for cur_period in config['periods']:
-    new_period = period.Period(period_size=(60 * cur_period['length']),
-                               product=cur_period['product'], name=cur_period['name'])
-    indicator_period_list.append(new_period)
-    product_list.add(cur_period['product'])
-    if cur_period['trade']:
-        if trade_period_list.get(cur_period['product']) is None:
-            trade_period_list[cur_period['product']] = []
-        trade_period_list[cur_period['product']].append(new_period)
+for cur_product in config['products']:
+    product_id = cur_product['id']
+    product_list.add(product_id)
+    for cur_period in cur_product['periods']:
+        period_name = "%s(%d)" % (product_id, cur_period)
+        new_period = period.Period(period_size=(60 * cur_period), product=product_id, name=period_name)
+        indicator_period_list.append(new_period)
+        if cur_product['trade']:
+            if trade_period_list.get(product_id) is None:
+                trade_period_list[product_id] = []
+            trade_period_list[product_id].append(new_period)
+
+# for cur_period in config['periods']:
+#     new_period = period.Period(period_size=(60 * cur_period['length']),
+#                                product=cur_period['product'], name=cur_period['name'])
+#     indicator_period_list.append(new_period)
+#     product_list.add(cur_period['product'])
+#     if cur_period['trade']:
+#         if trade_period_list.get(cur_period['product']) is None:
+#             trade_period_list[cur_period['product']] = []
+#         trade_period_list[cur_period['product']].append(new_period)
 
 auth_client = gdax.AuthenticatedClient(config['key'], config['secret'], config['passphrase'])
 trade_engine = engine.TradeEngine(auth_client, product_list=product_list, is_live=config['live'])
