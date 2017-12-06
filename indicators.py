@@ -11,8 +11,15 @@ from decimal import Decimal
 
 
 class IndicatorSubsystem:
-    def __init__(self, period_list):
+    def __init__(self, period_list, indicator_config):
         self.logger = logging.getLogger('trader-logger')
+        self.indicators_list = []
+        for indicator in indicator_config:
+            calculate = getattr(self, indicator['calculate_fn'])
+            if calculate:
+                self.indicators_list.append({'name': indicator['name'],
+                                             'calculate': calculate,
+                                             'kwargs': indicator})
         self.current_indicators = {}
         for period in period_list:
             self.current_indicators[period.name] = {}
@@ -21,48 +28,52 @@ class IndicatorSubsystem:
         total_periods = len(cur_period.candlesticks)
         if total_periods > 0:
             closing_prices = cur_period.get_closing_prices()
-            closing_prices_close = np.append(closing_prices, cur_period.cur_candlestick.close)
+            self.closing_prices_close = np.append(closing_prices, cur_period.cur_candlestick.close)
 
-            self.calculate_bbands(cur_period.name, closing_prices_close)
-            self.calculate_macd(cur_period.name, closing_prices_close)
+            for indicator in self.indicators_list:
+                indicator['calculate'](cur_period.name, indicator['kwargs'])
 
             self.current_indicators[cur_period.name]['close'] = cur_period.cur_candlestick.close
             self.current_indicators[cur_period.name]['total_periods'] = total_periods
 
-            self.logger.debug("[INDICATORS %s] Periods: %d : BBAND_UPPER_1: %f" %
-                              (cur_period.name, self.current_indicators[cur_period.name]['total_periods'], self.current_indicators[cur_period.name]['bband_upper_1']))
-
-    def calculate_bbands(self, period_name, close):
-        timeperiod = 20
-        upperband_1, middleband_1, lowerband_1 = talib.BBANDS(close, timeperiod=timeperiod, nbdevup=1, nbdevdn=1, matype=0)
-
-        self.current_indicators[period_name]['bband_upper_1'] = upperband_1[-1]
-        self.current_indicators[period_name]['bband_lower_1'] = lowerband_1[-1]
-
-        upperband_2, middleband_2, lowerband_2 = talib.BBANDS(close, timeperiod=timeperiod, nbdevup=2, nbdevdn=2, matype=0)
-
-        self.current_indicators[period_name]['bband_upper_2'] = upperband_2[-1]
-        self.current_indicators[period_name]['bband_lower_2'] = lowerband_2[-1]
-
-    def calculate_macd(self, period_name, closing_prices):
-        macd, macd_sig, macd_hist = talib.MACD(closing_prices, fastperiod=12,
-                                               slowperiod=26, signalperiod=9)
-        self.current_indicators[period_name]['macd'] = macd[-1]
-        self.current_indicators[period_name]['macd_sig'] = macd_sig[-1]
-        self.current_indicators[period_name]['macd_hist'] = macd_hist[-1]
-        self.current_indicators[period_name]['macd_hist_diff'] = Decimal(macd_hist[-1]) - Decimal(macd_hist[-2])
-
-    def calculate_vol_macd(self, period_name, volumes):
-        macd, macd_sig, macd_hist = talib.MACD(volumes, fastperiod=50,
-                                               slowperiod=200, signalperiod=14)
-        self.current_indicators[period_name]['vol_macd'] = macd[-1]
-        self.current_indicators[period_name]['vol_macd_sig'] = macd_sig[-1]
-        self.current_indicators[period_name]['vol_macd_hist'] = macd_hist[-1]
+            self.logger.debug("[INDICATORS %s] Periods: %d : BBAND_UPPER_1: %f BBAND_UPPER_2: %f" %
+                              (cur_period.name, self.current_indicators[cur_period.name]['total_periods'], self.current_indicators[cur_period.name]['bband_upper'], self.current_indicators[cur_period.name]['bband_upper']))
 
     def calculate_avg_volume(self, period_name, volumes):
         avg_vol = talib.SMA(volumes, timeperiod=15)
 
         self.current_indicators[period_name]['avg_volume'] = avg_vol[-1]
+
+    def calculate_bbands(self, period_name, kwargs):
+        timeperiod = kwargs['timeperiod']
+        nbdevup = kwargs['nbdevup']
+        nbdevdown = kwargs['nbdevdown']
+
+        upperband, middleband, lowerband = talib.BBANDS(self.closing_prices_close, timeperiod=timeperiod, nbdevup=nbdevup, nbdevdn=nbdevdown, matype=0)
+
+        self.current_indicators[period_name]['bband_upper'] = upperband[-1]
+        self.current_indicators[period_name]['bband_middle'] = middleband[-1]
+        self.current_indicators[period_name]['bband_lower'] = lowerband[-1]
+
+    def calculate_ema(self, period_name, close):
+        ema = talib.EMA(close, timeperiod=30)
+        self.current_indicators[period_name]['ema'] = ema[-1]
+
+    def calculate_macd(self, period_name, kwargs):
+        fastperiod = kwargs['fastperiod']
+        slowperiod = kwargs['slowperiod']
+        signalperiod = kwargs['signalperiod']
+        macd, macd_sig, macd_hist = talib.MACD(self.closing_prices_close, fastperiod=fastperiod,
+                                               slowperiod=slowperiod, signalperiod=signalperiod)
+        self.current_indicators[period_name]['macd'] = macd[-1]
+        self.current_indicators[period_name]['macd_sig'] = macd_sig[-1]
+        self.current_indicators[period_name]['macd_hist'] = macd_hist[-1]
+        self.current_indicators[period_name]['macd_hist_diff'] = Decimal(macd_hist[-1]) - Decimal(macd_hist[-2])
+
+    def calculate_mfi(self, period_name, highs, lows, closing_prices, volumes):
+        mfi = talib.MFI(highs, lows, closing_prices, volumes)
+
+        self.current_indicators[period_name]['mfi'] = mfi[-1]
 
     def calculate_obv(self, period_name, closing_prices, volumes, bid_or_ask):
         # cryptowat.ch does not include the first value in their OBV
@@ -78,7 +89,7 @@ class IndicatorSubsystem:
 
         self.current_indicators[period_name]['sar'] = sar[-1]
 
-    def calculate_mfi(self, period_name, highs, lows, closing_prices, volumes):
-        mfi = talib.MFI(highs, lows, closing_prices, volumes)
+    def calculate_sma(self, period_name, close):
+        sma = talib.SMA(close, timeperiod=30)
 
-        self.current_indicators[period_name]['mfi'] = mfi[-1]
+        self.current_indicators[period_name]['sma'] = sma[-1]

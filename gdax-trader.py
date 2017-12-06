@@ -96,7 +96,7 @@ trade_engine = engine.TradeEngine(auth_client, product_list=product_list, is_liv
 gdax_websocket = TradeAndHeartbeatWebsocket()
 gdax_websocket.start()
 indicator_period_list[0].verbose_heartbeat = True
-indicator_subsys = indicators.IndicatorSubsystem(indicator_period_list)
+indicator_subsys = indicators.IndicatorSubsystem(indicator_period_list, config['indicators'])
 last_indicator_update = time.time()
 
 if config['frontend'] == 'curses':

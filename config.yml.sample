@@ -3,6 +3,31 @@ secret: mysecret
 passphrase: mypassphrase
 live: no
 frontend: curses
+indicators:
+  - name: macd
+    enable: yes
+    calculate_fn: calculate_macd
+    fastperiod: 12
+    slowperiod: 26
+    signalperiod: 9
+  - name: bbands
+    enable: yes
+    calculate_fn: calculate_bbands
+    timeperiod: 20
+    nbdevup: 1
+    nbdevdown: 1
+    matype: 0
+strategies:
+  - name: macd
+    buy:
+      indicator: macd
+      condition: 'gt 0'
+    sell:
+      indicator: macd
+      condition: 'lt 0'
+  - name: bbands
+    buy:
+      indicator: bbands
 products:
   - id: BTC-USD
     periods: [60, 5]
