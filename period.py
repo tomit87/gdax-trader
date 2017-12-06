@@ -144,7 +144,7 @@ class Period:
         return np.array(self.candlesticks[:, 1], dtype='f8')
 
     def get_closing_prices(self):
-        return np.array(self.candlesticks[:, 4], dtype='f8')
+        return np.append(np.array(self.candlesticks[:, 4], dtype='f8'), self.cur_candlestick.close)
 
     def get_volumes(self):
         return np.array(self.candlesticks[:, 5], dtype='f8')
