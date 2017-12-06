@@ -10,24 +10,38 @@ indicators:
     fastperiod: 12
     slowperiod: 26
     signalperiod: 9
-  - name: bbands
+  - name: bbands1
     enable: yes
     calculate_fn: calculate_bbands
     timeperiod: 20
     nbdevup: 1
     nbdevdown: 1
     matype: 0
+  - name: ema1
+    enable: yes
+    calculate_fn: calculate_ema
+    timeperiod: 50
+  - name: ema2
+    enable: yes
+    calculate_fn: calculate_ema
+    timeperiod: 200
 strategies:
   - name: macd
+    indicators: [macd]
     buy:
-      indicator: macd
-      condition: 'gt 0'
+      - value: macd_hist
+        condition: 'gt 0'
     sell:
-      indicator: macd
-      condition: 'lt 0'
+      - value: macd_hist
+        condition: 'lt 0'
   - name: bbands
+    indicator: [bbands1]
     buy:
-      indicator: bbands
+      - value: close
+        condition: 'gt bband_upper'
+    sell:
+      - value: close
+        condition: 'lt bband_upper'
 products:
   - id: BTC-USD
     periods: [60, 5]
