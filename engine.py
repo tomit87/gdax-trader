@@ -292,8 +292,8 @@ class TradeEngine():
                 else:
                     if Decimal(indicators[cur_period.name[:-2] + '60']['adx']) > Decimal(25.0):
                         # Trending strategy
-                        new_buy_flag = new_buy_flag and Decimal(indicators[cur_period.name]['obv']) > Decimal(indicators[cur_period.name]['obv_ema'])
-                        new_sell_flag = new_sell_flag or Decimal(indicators[cur_period.name]['obv']) < Decimal(indicators[cur_period.name]['obv_ema'])
+                        new_buy_flag = new_buy_flag and Decimal(indicators[cur_period.name]['obv_ema2']) > Decimal(indicators[cur_period.name]['obv_ema6'])
+                        new_sell_flag = new_sell_flag or Decimal(indicators[cur_period.name]['obv_ema2']) < Decimal(indicators[cur_period.name]['obv_ema6'])
                     else:
                         # Ranging strategy
                         new_buy_flag = new_buy_flag and Decimal(indicators[cur_period.name]['stoch_slowk']) > Decimal(indicators[cur_period.name]['stoch_slowd']) and \
