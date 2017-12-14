@@ -71,8 +71,9 @@ class TradeEngine():
         self.update_order_thread = threading.Thread(target=self.update_orders, name='update_orders')
         self.update_order_thread.start()
 
-    def close(self):
-        self.stop_update_order_thread = False
+    def close(self, exit=False):
+        if exit:
+            self.stop_update_order_thread = True
         for product in self.products:
             # Setting both flags will close any open order threads
             product.buy_flag = False
@@ -196,6 +197,7 @@ class TradeEngine():
                     ret = self.auth_client.get_order(ret.get('id'))
                     last_order_update = time.time()
                 amount = self.get_quoted_currency_from_product_id(product.product_id)
+                time.sleep(0.01)
             self.auth_client.cancel_all(product_id=product.product_id)
             amount = self.get_quoted_currency_from_product_id(product.product_id)
         except Exception:
@@ -247,6 +249,7 @@ class TradeEngine():
                     ret = self.auth_client.get_order(ret.get('id'))
                     last_order_update = time.time()
                 amount = self.get_base_currency_from_product_id(product.product_id)
+                time.sleep(0.01)
             self.auth_client.cancel_all(product_id=product.product_id)
             amount = self.get_base_currency_from_product_id(product.product_id)
         except Exception:
